@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADFAF Toolkit — Advanced Digital Forensics and Anti-Forensics</title>
+<meta name="description" content="Multi-module forensic suite for detecting steganography, deepfakes, encoding artifacts, and file signature tampering.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  /* Backgrounds */
+  --bg:          #F0F2F5;
+  --bg-grad:     linear-gradient(145deg, #EFF2F8 0%, #F7F9FC 40%, #EEF0F8 100%);
+  --surface:     #FFFFFF;
+  --surface-2:   #F6F8FC;
+  --surface-3:   #EAEFF7;
+  --surface-4:   #DDE4F0;
+
+  /* Borders */
+  --border:      rgba(100, 116, 160, 0.14);
+  --border-2:    rgba(100, 116, 160, 0.26);
+  --border-3:    rgba(100, 116, 160, 0.40);
+
+  /* Text */
+  --text:        #0E1629;
+  --text-2:      #2D3A52;
+  --text-3:      #5A6B8A;
+  --text-4:      #8FA0BE;
+  --text-5:      #B5C4DA;
+
+  /* Brand */
+  --primary:     #4F6EF7;
+  --primary-2:   #3B56E8;
+  --primary-3:   #2A42CC;
+  --primary-dim: rgba(79, 110, 247, 0.10);
+  --primary-glow:rgba(79, 110, 247, 0.22);
+  --violet:      #7C3AED;
+  --violet-dim:  rgba(124, 58, 237, 0.10);
+  --indigo:      #4338CA;
+
+  /* Semantic */
+  --red:         #DC2626;
+  --red-bg:      #FEF2F2;
+  --red-border:  rgba(220, 38, 38, 0.20);
+  --amber:       #D97706;
+  --amber-bg:    #FFFBEB;
+  --amber-border:rgba(217, 119, 6, 0.20);
+  --green:       #059669;
+  --green-bg:    #ECFDF5;
+  --green-border:rgba(5, 150, 105, 0.20);
+  --blue:        #2563EB;
+  --blue-bg:     #EFF6FF;
+  --blue-border: rgba(37, 99, 235, 0.20);
+
+  /* Elevation */
+  --shadow-xs:   0 1px 2px rgba(14,22,41,0.05);
+  --shadow-sm:   0 2px 6px rgba(14,22,41,0.07), 0 1px 2px rgba(14,22,41,0.04);
+  --shadow-md:   0 6px 20px rgba(14,22,41,0.09), 0 2px 6px rgba(14,22,41,0.05);
+  --shadow-lg:   0 16px 48px rgba(14,22,41,0.12), 0 6px 16px rgba(14,22,41,0.06);
+  --shadow-xl:   0 24px 80px rgba(14,22,41,0.16), 0 8px 24px rgba(14,22,41,0.08);
+  --shadow-blue: 0 6px 24px rgba(79,110,247,0.35), 0 2px 8px rgba(79,110,247,0.20);
+  --shadow-blue-sm:0 3px 12px rgba(79,110,247,0.28);
+
+  /* Radii */
+  --r-xs: 4px; --r-sm: 8px; --r: 10px; --r-md: 12px;
+  --r-lg: 16px; --r-xl: 20px; --r-2xl: 24px; --r-3xl: 32px;
+
+  /* Fonts */
+  --font-ui:   'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-head: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  /* Transitions */
+  --tr:      0.18s cubic-bezier(0.4,0,0.2,1);
+  --tr-fast: 0.11s cubic-bezier(0.4,0,0.2,1);
+  --tr-slow: 0.35s cubic-bezier(0.4,0,0.2,1);
+  --tr-spring: 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ── RESET ── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-4); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-3); }
+
+/* ── TOPBAR ── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border-bottom: 1px solid var(--border);
+  padding: 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 68px;
+  box-shadow: 0 1px 0 var(--border), 0 4px 24px rgba(14,22,41,0.04);
+}
+
+.topbar-logo {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  box-shadow: var(--shadow-blue-sm);
+  flex-shrink: 0;
+  transition: transform var(--tr-spring), box-shadow var(--tr);
+}
+.topbar-logo:hover .logo-icon {
+  transform: rotate(-6deg) scale(1.08);
+  box-shadow: var(--shadow-blue);
+}
+
+.logo-wordmark { display: flex; flex-direction: column; gap: 1px; }
+.logo-name { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.logo-sub  { font-size: 0.62rem; font-weight: 500; color: var(--text-4); font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.topbar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 7px 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  box-shadow: var(--shadow-xs);
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22C55E;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+  animation: livePulse 2.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes livePulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(0.85); opacity: 0.6; }
+}
+
+.version-badge {
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 52px 36px 44px;
+  max-width: 1380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 32px;
+  position: relative;
+}
+
+/* Decorative background element */
+.hero::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -60px;
+  width: 520px;
+  height: 420px;
+  background: radial-gradient(ellipse at 60% 40%,
+    rgba(79,110,247,0.10) 0%,
+    rgba(124,58,237,0.06) 45%,
+    transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero > * { position: relative; z-index: 1; }
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hero-eyebrow-line {
+  display: inline-block;
+  width: 32px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--violet));
+  border-radius: 2px;
+}
+
+.hero-title {
+  font-family: var(--font-head);
+  font-size: clamp(2.6rem, 4.2vw, 4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.hero-title em {
+  font-style: normal;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  margin-top: 20px;
+  font-size: 1.08rem;
+  color: var(--text-3);
+  font-weight: 400;
+  max-width: 640px;
+  line-height: 1.78;
+  text-align: center;
+}
+
+/* Hero Stats */
+.hero-stats { display: flex; gap: 14px; align-items: flex-end; justify-content: center; }
+
+.hero-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 22px 26px;
+  text-align: center;
+  min-width: 114px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--tr-spring), box-shadow var(--tr);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-stat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--violet));
+  border-radius: 2px 2px 0 0;
+}
+
+.hero-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+.hero-stat-num {
+  font-family: var(--font-head);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-4);
+  font-family: var(--font-mono);
+  margin-top: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ── MODULE NAV ── */
+.modules-nav {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 36px;
+  position: sticky;
+  top: 68px;
+  z-index: 99;
+  box-shadow: 0 4px 24px rgba(14,22,41,0.05);
+}
+
+.modules-nav-inner {
+  max-width: 1380px;
+  margin: 0 auto;
+  display: flex;
+  gap: 6px;
+  padding: 14px 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.modules-nav-inner::-webkit-scrollbar { display: none; }
+
+.mod-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--tr);
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-3);
+  letter-spacing: -0.01em;
+}
+
+.mod-nav-btn:hover {
+  background: var(--surface);
+  border-color: var(--border-2);
+  color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.mod-nav-btn.active {
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-blue);
+  font-weight: 600;
+}
+
+.mod-nav-btn.active:hover { transform: translateY(-1px); }
+
+.mod-nav-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  transition: background var(--tr);
+}
+
+.mod-nav-btn.active .mod-nav-icon {
+  background: rgba(255,255,255,0.22);
+}
+
+.mod-nav-btn:hover:not(.active) .mod-nav-icon {
+  background: var(--primary-dim);
+}
+
+/* ── LAYOUT ── */
+.layout {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 32px 36px 100px;
+}
+
+/* ── MODULE PANELS ── */
+.main-panel { display: flex; flex-direction: column; gap: 20px; }
+.module-panel { display: none; animation: fadeSlideUp 0.28s cubic-bezier(0.4,0,0.2,1); }
+.module-panel.visible { display: flex; flex-direction: column; gap: 20px; }
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--tr);
+}
+
+.card:hover { box-shadow: var(--shadow-md); }
+
+.card-header {
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  position: relative;
+}
+
+.card-header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-2), transparent);
+}
+
+.card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--primary-dim), var(--violet-dim));
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(79,110,247,0.12);
+}
+
+.card-title {
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+
+.card-subtitle {
+  font-size: 0.83rem;
+  color: var(--text-4);
+  margin-top: 5px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.card-body { padding: 28px 32px; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 2px dashed var(--border-2);
+  border-radius: var(--r-lg);
+  padding: 48px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+  background: var(--surface-2);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(79,110,247,0.10) 0%, transparent 65%);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+}
+
+.upload-zone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(79,110,247,0.04), rgba(124,58,237,0.04));
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+}
+
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--surface);
+  transform: scale(1.007);
+}
+
+.upload-zone:hover::before, .upload-zone.drag-over::before { opacity: 1; }
+.upload-zone:hover::after,  .upload-zone.drag-over::after  { opacity: 1; }
+
+.upload-zone.compact { padding: 24px 20px; margin-top: 16px; }
+.upload-zone.compact .upload-icon { font-size: 1.9rem; margin-bottom: 9px; }
+.upload-zone.compact .upload-title { font-size: 0.95rem; }
+
+.upload-zone input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.8;
+  display: block;
+  transition: transform var(--tr-spring), opacity var(--tr);
+}
+.upload-zone:hover .upload-icon { transform: translateY(-4px) scale(1.08); opacity: 1; }
+
+.upload-title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.upload-hint {
+  font-size: 0.83rem;
+  color: var(--text-4);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.upload-formats {
+  margin-top: 18px;
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.fmt-tag {
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  font-weight: 500;
+  padding: 4px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  color: var(--text-4);
+  letter-spacing: 0.04em;
+}
+
+/* Selected File */
+.selected-file {
+  margin-top: 14px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  display: none;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-xs);
+  animation: fadeSlideUp 0.22s ease;
+}
+.selected-file.visible { display: flex; }
+
+.file-icon-wrap {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary-dim), var(--violet-dim));
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.file-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  flex: 1;
+  color: var(--text-2);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  font-size: 0.74rem;
+  color: var(--text-4);
+  font-family: var(--font-mono);
+  background: var(--surface-3);
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+
+/* ── OPTIONS ── */
+.options-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 20px; }
+
+.option-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 160px; }
+
+.option-label {
+  font-size: 0.67rem;
+  font-weight: 600;
+  color: var(--text-4);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.radio-chip input { display: none; }
+
+.radio-chip label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid var(--border-2);
+  border-radius: 99px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-3);
+  background: var(--surface);
+  transition: all var(--tr);
+  user-select: none;
+  letter-spacing: -0.01em;
+}
+
+.radio-chip input:checked + label {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: #fff;
+  box-shadow: var(--shadow-blue-sm);
+  font-weight: 600;
+}
+
+.radio-chip label:hover { border-color: var(--primary); color: var(--primary); }
+.radio-chip input:checked + label:hover { color: #fff; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 26px;
+  border-radius: var(--r-md);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all var(--tr);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--tr-fast);
+}
+
+.btn:hover::after { background: rgba(255,255,255,0.08); }
+.btn:active::after { background: rgba(0,0,0,0.06); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--violet) 100%);
+  color: #fff;
+  box-shadow: var(--shadow-blue);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(79,110,247,0.45), 0 2px 8px rgba(79,110,247,0.20);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+.btn-primary:disabled {
+  background: var(--surface-4);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+  color: var(--text-5);
+}
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--text-2);
+  border: 1px solid var(--border-2);
+  font-weight: 500;
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-ghost:hover {
+  background: var(--surface-2);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── PROGRESS ── */
+.progress-wrap { margin-top: 18px; display: none; }
+.progress-wrap.visible { display: block; }
+
+.progress-label {
+  font-size: 0.71rem;
+  color: var(--text-3);
+  margin-bottom: 9px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.progress-bar-bg {
+  height: 4px;
+  background: var(--surface-3);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--violet));
+  border-radius: 99px;
+  width: 0%;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* ── RESULTS ── */
+.results-card { display: none; }
+.results-card.visible { display: block; animation: fadeSlideUp 0.3s ease; }
+
+.verdict-banner {
+  padding: 26px 32px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.verdict-banner::before {
+  content: '';
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  opacity: 0.06;
+}
+
+.verdict-banner.success { background: linear-gradient(135deg, var(--green-bg), #F0FDF8); }
+.verdict-banner.success::before { background: var(--green); }
+.verdict-banner.warning { background: linear-gradient(135deg, var(--amber-bg), #FFFCF0); }
+.verdict-banner.warning::before { background: var(--amber); }
+.verdict-banner.danger  { background: linear-gradient(135deg, var(--red-bg), #FFF4F4); }
+.verdict-banner.danger::before  { background: var(--red); }
+.verdict-banner.info    { background: linear-gradient(135deg, var(--blue-bg), #F0F5FF); }
+.verdict-banner.info::before    { background: var(--blue); }
+
+.verdict-icon-wrap {
+  width: 52px; height: 52px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.verdict-banner.success .verdict-icon-wrap { background: rgba(5,150,105,0.12); border: 1px solid var(--green-border); }
+.verdict-banner.warning .verdict-icon-wrap { background: rgba(217,119,6,0.12); border: 1px solid var(--amber-border); }
+.verdict-banner.danger  .verdict-icon-wrap { background: rgba(220,38,38,0.12); border: 1px solid var(--red-border); }
+.verdict-banner.info    .verdict-icon-wrap { background: rgba(37,99,235,0.12); border: 1px solid var(--blue-border); }
+
+.verdict-title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.12rem;
+  letter-spacing: -0.025em;
+}
+
+.verdict-banner.success .verdict-title { color: #065F46; }
+.verdict-banner.warning .verdict-title { color: #92400E; }
+.verdict-banner.danger  .verdict-title { color: #991B1B; }
+.verdict-banner.info    .verdict-title { color: #1E40AF; }
+
+.verdict-sub {
+  font-size: 0.84rem;
+  color: var(--text-3);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* Score Section */
+.score-section {
+  padding: 24px 30px;
+  border-bottom: 1px solid var(--border);
+}
+
+.score-label {
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.score-display { display: flex; align-items: center; gap: 22px; }
+
+.score-number {
+  font-family: var(--font-head);
+  font-size: 3.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  letter-spacing: -0.05em;
+}
+
+.score-track {
+  flex: 1;
+  height: 7px;
+  background: var(--surface-3);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.score-fill { height: 100%; border-radius: 99px; transition: width 1.0s cubic-bezier(0.34,1.56,0.64,1); }
+.score-fill.low    { background: linear-gradient(90deg, #0D9158, #34D399); }
+.score-fill.medium { background: linear-gradient(90deg, #B45309, #F59E0B); }
+.score-fill.high   { background: linear-gradient(90deg, #B91C1C, #EF4444); }
+
+.score-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  color: var(--text-5);
+  margin-top: 7px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* Results Table */
+.results-table { padding: 20px 30px; }
+
+.result-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+.result-row:last-child { border-bottom: none; }
+
+.result-section-row {
+  display: block;
+  padding: 18px 0 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.result-section-title {
+  font-size: 0.67rem;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.result-key {
+  color: var(--text-4);
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 0.70rem;
+  padding-top: 1px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.result-val { color: var(--text-2); word-break: break-all; font-size: 0.85rem; line-height: 1.55; }
+.result-val.mono    { font-family: var(--font-mono); font-size: 0.70rem; color: var(--text-3); }
+.result-val.success { color: #065F46; font-weight: 600; }
+.result-val.warning { color: #92400E; font-weight: 600; }
+.result-val.danger  { color: #B91C1C; font-weight: 600; }
+.result-val.exif    { color: var(--primary-2); }
+.result-val.info    { color: var(--text-2); }
+
+/* Findings */
+.findings-section { padding: 0 30px 22px; }
+
+.findings-title {
+  font-size: 0.63rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-4);
+  margin-bottom: 11px;
+  font-weight: 600;
+}
+
+.finding-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 15px;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+  border-radius: var(--r-sm);
+  margin-bottom: 7px;
+  font-size: 0.81rem;
+  color: #92400E;
+  line-height: 1.5;
+  transition: transform var(--tr), box-shadow var(--tr);
+}
+.finding-chip:hover { transform: translateX(3px); box-shadow: var(--shadow-xs); }
+.finding-chip-icon { flex-shrink: 0; margin-top: 1px; }
+
+/* Encoded Output */
+.encoded-output {
+  margin-top: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-2);
+  max-height: 180px;
+  overflow-y: auto;
+  word-break: break-all;
+  line-height: 1.7;
+}
+
+.copy-btn { font-size: 0.76rem; padding: 7px 14px; }
+
+.method-note {
+  margin: 0 30px 22px;
+  padding: 13px 17px;
+  background: var(--blue-bg);
+  border-radius: var(--r-md);
+  font-size: 0.77rem;
+  color: #1E40AF;
+  border: 1px solid var(--blue-border);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+
+/* Breakdown */
+.breakdown-grid {
+  padding: 0 30px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(165px,1fr));
+  gap: 11px;
+}
+
+.breakdown-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  transition: transform var(--tr), box-shadow var(--tr);
+}
+.breakdown-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+
+.breakdown-name {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-4);
+  margin-bottom: 9px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.breakdown-score {
+  font-family: var(--font-head);
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.breakdown-score.low    { color: #059669; }
+.breakdown-score.medium { color: var(--amber); }
+.breakdown-score.high   { color: var(--red); }
+
+.breakdown-bar {
+  height: 3px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+.breakdown-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s ease;
+}
+
+.breakdown-detail {
+  font-size: 0.66rem;
+  color: var(--text-4);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+/* ── LOADER ── */
+.loader { display: none; }
+.loader.visible {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  font-size: 0.82rem;
+  color: var(--text-3);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── WELCOME ── */
+.welcome {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2xl);
+  padding: 60px 50px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome::before {
+  content: '';
+  position: absolute;
+  top: -80px; left: 50%;
+  transform: translateX(-50%);
+  width: 500px; height: 300px;
+  background: radial-gradient(ellipse, rgba(79,110,247,0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.welcome-emblem {
+  width: 90px; height: 90px;
+  background: linear-gradient(135deg, var(--primary-dim), rgba(124,58,237,0.14));
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r-2xl) + 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.6rem;
+  margin: 0 auto 28px;
+  box-shadow: 0 4px 16px rgba(79,110,247,0.12);
+  position: relative;
+  transition: transform var(--tr-spring);
+}
+.welcome-emblem:hover { transform: scale(1.08) rotate(-4deg); }
+
+.welcome-title {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.04em;
+  position: relative;
+}
+
+.welcome-sub {
+  color: var(--text-3);
+  font-size: 1.05rem;
+  margin-top: 14px;
+  font-weight: 400;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.72;
+  position: relative;
+}
+
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 48px;
+  text-align: left;
+  position: relative;
+}
+
+.welcome-item {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  cursor: pointer;
+  transition: all var(--tr-spring);
+  box-shadow: var(--shadow-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--primary-dim), var(--violet-dim));
+  opacity: 0;
+  transition: opacity var(--tr);
+}
+
+.welcome-item:hover {
+  border-color: var(--primary);
+  transform: translateY(-5px) scale(1.015);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--primary-glow);
+}
+
+.welcome-item:hover::before { opacity: 1; }
+
+.welcome-item-icon {
+  width: 46px; height: 46px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+  transition: all var(--tr-spring);
+  position: relative;
+}
+
+.welcome-item:hover .welcome-item-icon {
+  background: linear-gradient(135deg, var(--primary-dim), var(--violet-dim));
+  border-color: var(--primary);
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.welcome-item-title {
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--text);
+  margin-bottom: 9px;
+  font-family: var(--font-head);
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.welcome-item-desc {
+  font-size: 0.84rem;
+  color: var(--text-3);
+  line-height: 1.65;
+  font-weight: 400;
+  position: relative;
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-2) 30%, var(--border-2) 70%, transparent);
+  margin: 4px 0;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .hero { grid-template-columns: 1fr; gap: 32px; }
+  .hero-stats { display: none; }
+  .welcome-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  .topbar { padding: 0 20px; }
+  .hero { padding: 36px 20px 32px; }
+  .layout { padding: 24px 20px 80px; }
+  .modules-nav { padding: 0 20px; }
+  .modules-nav-inner { top: 68px; }
+  .card-body { padding: 22px 22px; }
+  .card-header { padding: 22px 22px 20px; }
+  .result-row { grid-template-columns: 1fr; gap: 4px; }
+  .topbar-pill { display: none; }
+}
+
+@media (max-width: 540px) {
+  .welcome-grid { grid-template-columns: 1fr; }
+  .welcome { padding: 40px 24px; }
+  .hero-title { font-size: 2.2rem; }
+  .breakdown-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--text);
+  color: #fff;
+  padding: 13px 22px;
+  border-radius: var(--r-md);
+  font-size: 0.83rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  z-index: 9999;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none;
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+  max-width: 340px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── DECORATIVE CORNER LINES ON CARD ── */
+.card-header-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-badge {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  color: var(--text-4);
+  background: var(--surface-3);
+}
+
+/* ── SECTION LABELS ── */
+.section-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-4);
+  margin-bottom: 10px;
+}
+
+/* Smooth button group layout */
+.btn-row { display: flex; gap: 10px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+
+/* ── REPORT MODULE ── */
+.report-title-input {
+  width: 100%;
+  max-width: 520px;
+  padding: 11px 16px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  transition: border-color var(--tr), box-shadow var(--tr);
+  outline: none;
+}
+.report-title-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+
+.report-module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.report-mod-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--tr);
+  text-align: center;
+  position: relative;
+  user-select: none;
+}
+
+.report-mod-card input[type=checkbox] {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.report-mod-card:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-dim);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.report-mod-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.rmod-icon { font-size: 1.6rem; }
+
+.rmod-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: -0.01em;
+}
+
+.rmod-status {
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  color: var(--text-4);
+  font-weight: 500;
+}
+
+.rmod-status.has-data {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.report-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--blue-bg);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--r-md);
+  font-size: 0.83rem;
+  color: var(--blue);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.report-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.report-summary-row:last-child { border-bottom: none; }
+.report-summary-icon {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.report-summary-icon svg { width: 24px; height: 24px; display: block; }
+.report-summary-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--green-bg);
+  color: var(--green);
+  font-weight: 600;
+  border: 1px solid var(--green-border);
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar-logo" href="#" onclick="showModule('welcome');return false;">
+    <div class="logo-icon">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="2" y="2" width="28" height="28" rx="7" fill="#e8eaff" stroke="#7C3AED" stroke-width="1.3"/>
+        <rect x="6.5" y="8.5" width="17" height="12.5" rx="2.4" fill="#f5f3ff" stroke="#7C3AED" stroke-width="1.45"/>
+        <path d="M12.5 24h6M15.5 21v3" stroke="#7C3AED" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 13h5.5M10 16h4M18.5 13.2h1.8M18.5 16h1.8" stroke="#4F6EF7" stroke-width="1.25" stroke-linecap="round"/>
+        <circle cx="21" cy="21" r="4.2" fill="#e8eaff" stroke="#4F6EF7" stroke-width="1.55"/>
+        <path d="M23.9 23.9L26.5 26.5" stroke="#4F6EF7" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M19.4 21h3.2M21 19.4v3.2" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="21" cy="21" r="1.05" fill="#7C3AED"/>
+      </svg>
+    </div>
+    <div class="logo-wordmark">
+      <span class="logo-name">ADFAF Toolkit</span>
+      <span class="logo-sub">Advanced Digital Forensics and Anti-Forensics</span>
+    </div>
+  </a>
+  <div class="topbar-right">
+    <div class="topbar-pill">
+      <span class="live-dot"></span>
+      localhost:5050
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <div>
+    <h1 class="hero-title">Advanced Digital<br>Forensics &amp; <em>Anti-Forensics</em><br>Detection Toolkit</h1>
+  </div>
+</div>
+
+<nav class="modules-nav">
+  <div class="modules-nav-inner">
+    <button class="mod-nav-btn" onclick="showModule('welcome')" id="nav-welcome">
+      <span class="mod-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="5" fill="#eff6ff" stroke="#2563EB" stroke-width="1.5"/><path d="M16 7L6 16h3v9h6v-6h2v6h6v-9h3z" fill="#2563EB" opacity="0.85" stroke="none"/></svg></span>
+      <span>Home</span>
+    </button>
+    <button class="mod-nav-btn" onclick="showModule('metadata')" id="nav-metadata">
+      <span class="mod-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="none"><rect x="4" y="2" width="18" height="24" rx="2" fill="#e8eaff" stroke="#7C3AED" stroke-width="1.5"/><path d="M18 2v6h6" stroke="#7C3AED" stroke-width="1.5" fill="none" stroke-linejoin="round"/><text x="7" y="17" font-size="7" font-family="monospace" font-weight="700" fill="#4F6EF7">&lt;/&gt;</text><circle cx="22" cy="24" r="5" fill="#7C3AED" opacity="0.15" stroke="#7C3AED" stroke-width="1.4"/><path d="M22 21.5v1m0 3v1m-2.6-4.1.7.7m3.8 3.8.7.7M19.5 24h1m3 0h1m-5.3 1.4.7-.7m3.8-3.8.7-.7" stroke="#7C3AED" stroke-width="1.1" stroke-linecap="round"/><circle cx="22" cy="24" r="1.5" fill="#7C3AED"/></svg></span>
+      <span>Metadata Analysis</span>
+    </button>
+    <button class="mod-nav-btn" onclick="showModule('stego')" id="nav-stego">
+      <span class="mod-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="5" fill="#ecfeff" stroke="#0891B2" stroke-width="1.5"/><ellipse cx="16" cy="16" rx="10" ry="6" stroke="#0891B2" stroke-width="1.6" fill="none"/><circle cx="16" cy="16" r="3.2" fill="#0891B2"/><circle cx="16" cy="16" r="1.4" fill="#ecfeff"/><line x1="6" y1="14" x2="26" y2="14" stroke="#0891B2" stroke-width="0.9" opacity="0.4"/><line x1="6" y1="18" x2="26" y2="18" stroke="#0891B2" stroke-width="0.9" opacity="0.4"/></svg></span>
+        <span>Steganography Detection</span>
+    </button>
+    <button class="mod-nav-btn" onclick="showModule('encoding')" id="nav-encoding">
+      <span class="mod-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="5" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/><text x="5" y="19" font-size="9" font-family="monospace" font-weight="800" fill="#059669">&lt;/&gt;</text><polyline points="21,10 25,16 21,22" stroke="#059669" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>Encoding / Decoding</span>
+    </button>
+    <button class="mod-nav-btn" onclick="showModule('signature')" id="nav-signature">
+      <span class="mod-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="none"><rect x="4" y="2" width="24" height="28" rx="3" fill="#eef2ff" stroke="#4338CA" stroke-width="1.5"/><path d="M20 2v8h8" stroke="#4338CA" stroke-width="1.5" fill="none" stroke-linejoin="round"/><rect x="4" y="20" width="24" height="10" rx="0" ry="0" fill="#4338CA" rx="3"/><text x="16" y="28" font-size="6" font-family="monospace" font-weight="800" fill="white" text-anchor="middle">.EXE?</text><line x1="8" y1="13" x2="18" y2="13" stroke="#4338CA" stroke-width="1.3" opacity="0.5"/><line x1="8" y1="17" x2="15" y2="17" stroke="#4338CA" stroke-width="1.3" opacity="0.35"/></svg></span>
+      <span>File Signature Analysis</span>
+    </button>
+    <button class="mod-nav-btn" onclick="showModule('deepfake')" id="nav-deepfake">
+      <span class="mod-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="5" fill="#fef2f2" stroke="#DC2626" stroke-width="1.5"/><circle cx="16" cy="13" r="5" stroke="#DC2626" stroke-width="1.6" fill="none"/><path d="M8 26c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="#DC2626" stroke-width="1.6" fill="none" stroke-linecap="round"/><line x1="10" y1="10" x2="22" y2="10" stroke="#DC2626" stroke-width="0.9" opacity="0.4"/><line x1="9" y1="13" x2="11" y2="13" stroke="#DC2626" stroke-width="0.9" opacity="0.4"/><line x1="21" y1="13" x2="23" y2="13" stroke="#DC2626" stroke-width="0.9" opacity="0.4"/><line x1="10" y1="16" x2="22" y2="16" stroke="#DC2626" stroke-width="0.9" opacity="0.4"/></svg></span>
+        <span>Deepfake Detection</span>
+    </button>
+    <button class="mod-nav-btn" onclick="showModule('report')" id="nav-report">
+      <span class="mod-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" fill="none"><rect x="3" y="3" width="26" height="26" rx="4" fill="#fff7ed" stroke="#EA580C" stroke-width="1.5"/><rect x="9" y="8" width="14" height="2.5" rx="1" fill="#EA580C" opacity="0.5"/><rect x="9" y="12.5" width="10" height="2" rx="1" fill="#EA580C" opacity="0.35"/><rect x="9" y="19" width="3" height="6" rx="1" fill="#EA580C"/><rect x="14.5" y="16" width="3" height="9" rx="1" fill="#F97316"/><rect x="20" y="13" width="3" height="12" rx="1" fill="#FB923C"/><polyline points="9,19 14.5,16 20,13 24,10" stroke="#EA580C" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>Report</span>
+    </button>
+  </div>
+</nav>
+
+<div class="layout">
+  <main class="main-panel">
+
+    <!-- WELCOME -->
+    <div id="panel-welcome" class="module-panel visible">
+      <div class="welcome">
+        <div class="welcome-emblem">
+          <svg width="96" height="96" viewBox="0 0 32 32" fill="none">
+            <rect x="2" y="2" width="28" height="28" rx="7" fill="#e8eaff" stroke="#7C3AED" stroke-width="1.3"/>
+            <rect x="6.5" y="8.5" width="17" height="12.5" rx="2.4" fill="#f5f3ff" stroke="#7C3AED" stroke-width="1.45"/>
+            <path d="M12.5 24h6M15.5 21v3" stroke="#7C3AED" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 13h5.5M10 16h4M18.5 13.2h1.8M18.5 16h1.8" stroke="#4F6EF7" stroke-width="1.25" stroke-linecap="round"/>
+            <circle cx="21" cy="21" r="4.2" fill="#e8eaff" stroke="#4F6EF7" stroke-width="1.55"/>
+            <path d="M23.9 23.9L26.5 26.5" stroke="#4F6EF7" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M19.4 21h3.2M21 19.4v3.2" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="21" cy="21" r="1.05" fill="#7C3AED"/>
+          </svg>
+        </div>
+        <div class="welcome-title">Select a Module to Begin</div>
+        <div class="welcome-sub">Each module delivers deep forensic analysis. Upload a file and get instant, detailed results — no data leaves your machine.</div>
+        <div class="welcome-grid">
+          <div class="welcome-item" onclick="showModule('metadata')">
+            <div class="welcome-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="19" height="26" rx="2" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.5"/><path d="M17 1v7h7" stroke="#7C3AED" stroke-width="1.5" fill="none" stroke-linejoin="round"/><text x="6" y="18" font-size="8" font-family="monospace" font-weight="700" fill="#4F6EF7">&lt;/&gt;</text><circle cx="23" cy="25" r="6" fill="#7C3AED" opacity="0.12" stroke="#7C3AED" stroke-width="1.5"/><path d="M23 22v1.2m0 3.6V28m-3.1-4.9.85.85m4.5 4.5.85.85M20 25h1.2m3.6 0H26m-5.1 1.65.85-.85m4.5-4.5.85-.85" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/><circle cx="23" cy="25" r="1.8" fill="#7C3AED"/></svg></div>
+            <div class="welcome-item-title">Metadata Analysis</div>
+            <div class="welcome-item-desc">Extract EXIF data, file hashes, timestamps, and detect tampering against NTFS $MFT artifacts.</div>
+          </div>
+          <div class="welcome-item" onclick="showModule('stego')">
+            <div class="welcome-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfeff" stroke="#0891B2" stroke-width="1.5"/><ellipse cx="16" cy="16" rx="10" ry="6" stroke="#0891B2" stroke-width="1.8" fill="none"/><circle cx="16" cy="16" r="3.5" fill="#0891B2"/><circle cx="16" cy="16" r="1.5" fill="#ecfeff"/><line x1="6" y1="14" x2="26" y2="14" stroke="#0891B2" stroke-width="1" opacity="0.35"/><line x1="6" y1="18" x2="26" y2="18" stroke="#0891B2" stroke-width="1" opacity="0.35"/></svg></div>
+              <div class="welcome-item-title">Steganography Detection</div>
+            <div class="welcome-item-desc">Detect hidden data via LSB analysis, chi-square tests, and multi-plane entropy scanning.</div>
+          </div>
+          <div class="welcome-item" onclick="showModule('encoding')">
+            <div class="welcome-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/><text x="4" y="20" font-size="11" font-family="monospace" font-weight="800" fill="#059669">&lt;/&gt;</text><polyline points="22,9 27,16 22,23" stroke="#059669" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="welcome-item-title">Encoding / Decoding</div>
+            <div class="welcome-item-desc">Encode or decode files with Base32 or Base64, with live preview output and download.</div>
+          </div>
+          <div class="welcome-item" onclick="showModule('signature')">
+            <div class="welcome-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="26" height="30" rx="3" fill="#eef2ff" stroke="#4338CA" stroke-width="1.5"/><path d="M21 1v9h9" stroke="#4338CA" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="7" y1="14" x2="19" y2="14" stroke="#4338CA" stroke-width="1.5" opacity="0.5"/><line x1="7" y1="18" x2="16" y2="18" stroke="#4338CA" stroke-width="1.5" opacity="0.35"/><rect x="3" y="21" width="26" height="10" rx="0" fill="#4338CA"/><path d="M3 28h26v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-4z" fill="#4338CA"/><text x="16" y="29" font-size="6.5" font-family="monospace" font-weight="800" fill="white" text-anchor="middle">.EXE?</text></svg></div>
+            <div class="welcome-item-title">File Signature Analysis</div>
+            <div class="welcome-item-desc">Detect file type masquerading using magic byte signatures with entropy analysis.</div>
+          </div>
+          <div class="welcome-item" onclick="showModule('deepfake')">
+            <div class="welcome-item-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#fef2f2" stroke="#DC2626" stroke-width="1.5"/><circle cx="16" cy="13" r="5.5" stroke="#DC2626" stroke-width="2" fill="none"/><path d="M7 27c0-4.9 4-9 9-9s9 4.1 9 9" stroke="#DC2626" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="9" y1="10" x2="23" y2="10" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="8" y1="13" x2="10.5" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="21.5" y1="13" x2="24" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="9" y1="16" x2="23" y2="16" stroke="#DC2626" stroke-width="1" opacity="0.4"/></svg></div>
+              <div class="welcome-item-title">Deepfake Detection</div>
+            <div class="welcome-item-desc">6-layer forensic pipeline detecting AI-generated images, and video with confidence scoring.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METADATA -->
+      <div id="panel-metadata" class="module-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="19" height="26" rx="2" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.5"/><path d="M17 1v7h7" stroke="#7C3AED" stroke-width="1.5" fill="none" stroke-linejoin="round"/><text x="6" y="18" font-size="8" font-family="monospace" font-weight="700" fill="#4F6EF7">&lt;/&gt;</text><circle cx="23" cy="25" r="6" fill="#7C3AED" opacity="0.12" stroke="#7C3AED" stroke-width="1.5"/><path d="M23 22v1.2m0 3.6V28m-3.1-4.9.85.85m4.5 4.5.85.85M20 25h1.2m3.6 0H26m-5.1 1.65.85-.85m4.5-4.5.85-.85" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/><circle cx="23" cy="25" r="1.8" fill="#7C3AED"/></svg></div>
+          <div style="flex:1">
+            <div class="card-title">Metadata Analysis</div>
+            <div class="card-subtitle">Step 1 — select $MFT &middot; Step 2 — select the suspicious file for tampering analysis</div>
+          </div>
+          <div class="card-header-meta">
+            <span class="header-badge">NTFS · EXIF</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="upload-zone" id="meta-mft-zone">
+            <input type="file" id="meta-mft-file" name="mft_file" accept=".copy0,application/octet-stream" onchange="validateMFTFile(this)">
+            <span class="upload-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="19" height="26" rx="2" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.5"/><path d="M17 1v7h7" stroke="#7C3AED" stroke-width="1.5" fill="none" stroke-linejoin="round"/><text x="6" y="18" font-size="8" font-family="monospace" font-weight="700" fill="#4F6EF7">&lt;/&gt;</text><circle cx="23" cy="25" r="6" fill="#7C3AED" opacity="0.12" stroke="#7C3AED" stroke-width="1.5"/><path d="M23 22v1.2m0 3.6V28m-3.1-4.9.85.85m4.5 4.5.85.85M20 25h1.2m3.6 0H26m-5.1 1.65.85-.85m4.5-4.5.85-.85" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/><circle cx="23" cy="25" r="1.8" fill="#7C3AED"/></svg></span>
+            <div class="upload-title">Step 1 — Drop $MFT artifact here</div>
+            <div class="upload-hint">Select $MFT or $MFT.copy0 from FTK Imager first</div>
+            <div class="upload-formats">
+              <span class="fmt-tag">$MFT</span>
+              <span class="fmt-tag">.copy0</span>
+            </div>
+          </div>
+          <div class="selected-file" id="meta-mft-selected">
+            <div class="file-icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="19" height="26" rx="2" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.8"/><path d="M17 1v7h7" stroke="#7C3AED" stroke-width="1.8" fill="none" stroke-linejoin="round"/><line x1="6" y1="13" x2="15" y2="13" stroke="#7C3AED" stroke-width="1.3" opacity="0.5"/><line x1="6" y1="17" x2="13" y2="17" stroke="#7C3AED" stroke-width="1.3" opacity="0.35"/></svg></div>
+            <span class="file-name" id="meta-mft-fname"></span>
+            <span class="file-size" id="meta-mft-fsize"></span>
+          </div>
+          <div class="upload-zone compact" id="meta-zone">
+            <input type="file" id="meta-file"
+       accept=".jpg,.jpeg,.png,.pdf,.docx,.mp4"
+       onchange="onFileSelect(this, 'meta')">
+            <span class="upload-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 32 32" fill="none"><path d="M8 3h11l5 5v21H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 3v6h5" stroke="#7C3AED" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 14h10M11 18h8M11 22h6" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" opacity="0.75"/></svg></span>
+            <div class="upload-title">Step 2 — Drop suspicious file here</div>
+            <div class="upload-hint">File whose timestamps should be checked against $MFT</div>
+            <div class="upload-formats">
+              <span class="fmt-tag">.jpg</span><span class="fmt-tag">.png</span>
+              <span class="fmt-tag">.pdf</span><span class="fmt-tag">.docx</span>
+              <span class="fmt-tag">.mp4</span><span class="fmt-tag">any</span>
+            </div>
+          </div>
+          <div class="selected-file" id="meta-selected">
+            <div class="file-icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M8 3h11l5 5v21H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 3v6h5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 14h10M11 18h8M11 22h6" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" opacity="0.75"/></svg></div>
+            <span class="file-name" id="meta-fname"></span>
+            <span class="file-size" id="meta-fsize"></span>
+          </div>
+          <div class="progress-wrap" id="meta-progress">
+            <div class="progress-label">
+              <span id="meta-ptext">Analyzing&hellip;</span>
+              <span id="meta-ppct">0%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="meta-pbar"></div></div>
+          </div>
+          <div class="loader" id="meta-loader"><div class="spinner"></div>Parsing $MFT and analyzing metadata timestamps&hellip;</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runModule('metadata')" id="meta-run" disabled>&#9654; Analyze Metadata</button>
+          </div>
+        </div>
+      </div>
+      <div class="card results-card" id="meta-results"></div>
+    </div>
+
+    <!-- STEGO -->
+    <div id="panel-stego" class="module-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfeff" stroke="#0891B2" stroke-width="1.5"/><ellipse cx="16" cy="16" rx="10" ry="6" stroke="#0891B2" stroke-width="1.8" fill="none"/><circle cx="16" cy="16" r="3.5" fill="#0891B2"/><circle cx="16" cy="16" r="1.5" fill="#ecfeff"/><line x1="6" y1="14" x2="26" y2="14" stroke="#0891B2" stroke-width="1" opacity="0.35"/><line x1="6" y1="18" x2="26" y2="18" stroke="#0891B2" stroke-width="1" opacity="0.35"/></svg></div>
+          <div style="flex:1">
+            <div class="card-title">Steganography Detection</div>
+            <div class="card-subtitle">Detect hidden data in images via LSB analysis, chi-square and entropy tests</div>
+          </div>
+          <div class="card-header-meta">
+            <span class="header-badge">LSB · χ² · Entropy</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="options-row">
+            <div class="option-group">
+              <div class="option-label">Media Type</div>
+              <div class="radio-group">
+                <div class="radio-chip"><input type="radio" name="stego-type" id="st-img" value="image" checked><label for="st-img">🖼 Image</label></div>
+              </div>
+            </div>
+          </div>
+          <div class="upload-zone" id="stego-zone">
+            <input type="file" id="stego-file" accept="image/*" onchange="onFileSelect(this,'stego')">
+            <span class="upload-icon" id="stego-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="7" fill="#ecfeff" stroke="#0891B2" stroke-width="1.5"/><ellipse cx="16" cy="16" rx="11" ry="7" stroke="#0891B2" stroke-width="1.8" fill="none"/><circle cx="16" cy="16" r="4" fill="#0891B2"/><circle cx="16" cy="16" r="1.8" fill="#ecfeff"/><line x1="5" y1="13.5" x2="27" y2="13.5" stroke="#0891B2" stroke-width="1" opacity="0.3"/><line x1="5" y1="18.5" x2="27" y2="18.5" stroke="#0891B2" stroke-width="1" opacity="0.3"/></svg></span>
+            <div class="upload-title">Drop image here</div>
+            <div class="upload-hint">LSB analysis &middot; chi-square test &middot; entropy scan</div>
+            <div class="upload-formats">
+              <span class="fmt-tag">.png</span><span class="fmt-tag">.jpg</span>
+              <span class="fmt-tag">.gif</span><span class="fmt-tag">.mp4</span>
+            </div>
+          </div>
+          <div class="selected-file" id="stego-selected">
+            <div class="file-icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfeff" stroke="#0891B2" stroke-width="1.8"/><ellipse cx="16" cy="16" rx="9" ry="6" stroke="#0891B2" stroke-width="1.6" fill="none"/><circle cx="16" cy="16" r="3" fill="#0891B2"/><circle cx="16" cy="16" r="1.2" fill="#ecfeff"/></svg></div>
+            <span class="file-name" id="stego-fname"></span>
+            <span class="file-size" id="stego-fsize"></span>
+          </div>
+          <div class="loader" id="stego-loader"><div class="spinner"></div>Running steganography analysis&hellip;</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runModule('stego')" id="stego-run" disabled>&#9654; Detect Hidden Data</button>
+          </div>
+        </div>
+      </div>
+      <div class="card results-card" id="stego-results"></div>
+    </div>
+
+    <!-- ENCODING -->
+    <div id="panel-encoding" class="module-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/><text x="4" y="20" font-size="11" font-family="monospace" font-weight="800" fill="#059669">&lt;/&gt;</text><polyline points="22,9 27,16 22,23" stroke="#059669" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div style="flex:1">
+            <div class="card-title">Encoding / Decoding</div>
+            <div class="card-subtitle">Encode or decode files with Base32 or Base64 — with live output preview and download</div>
+          </div>
+          <div class="card-header-meta">
+            <span class="header-badge">Base32 · Base64</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="options-row">
+            <div class="option-group">
+              <div class="option-label">Encoding Standard</div>
+              <div class="radio-group">
+                <div class="radio-chip"><input type="radio" name="enc-std" id="enc-b64" value="base64" checked><label for="enc-b64">Base64</label></div>
+                <div class="radio-chip"><input type="radio" name="enc-std" id="enc-b32" value="base32"><label for="enc-b32">Base32</label></div>
+              </div>
+            </div>
+            <div class="option-group">
+              <div class="option-label">Operation</div>
+              <div class="radio-group">
+                <div class="radio-chip"><input type="radio" name="enc-mode" id="enc-encode" value="encode" checked><label for="enc-encode">⬆ Encode</label></div>
+                <div class="radio-chip"><input type="radio" name="enc-mode" id="enc-decode" value="decode"><label for="enc-decode">⬇ Decode</label></div>
+              </div>
+            </div>
+          </div>
+          <div class="upload-zone" id="enc-zone">
+            <input type="file" id="enc-file" accept="*/*" onchange="onFileSelect(this,'enc')">
+            <span class="upload-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="7" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/><text x="4" y="21" font-size="13" font-family="monospace" font-weight="800" fill="#059669">&lt;/&gt;</text><polyline points="23,8 28,16 23,24" stroke="#059669" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="upload-title">Drop any file here</div>
+            <div class="upload-hint">Encode to or decode from Base32/Base64</div>
+            <div class="upload-formats">
+              <!-- <span class="fmt-tag">any file</span>--><span class="fmt-tag">.txt</span> 
+            </div>
+          </div>
+          <div class="selected-file" id="enc-selected">
+            <div class="file-icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.8"/><text x="5" y="20" font-size="10" font-family="monospace" font-weight="800" fill="#059669">&lt;/&gt;</text></svg></div>
+            <span class="file-name" id="enc-fname"></span>
+            <span class="file-size" id="enc-fsize"></span>
+          </div>
+          <div class="loader" id="enc-loader"><div class="spinner"></div>Processing encoding operation&hellip;</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runModule('encoding')" id="enc-run" disabled>&#9654; Run Operation</button>
+          </div>
+        </div>
+      </div>
+      <div class="card results-card" id="enc-results"></div>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div id="panel-signature" class="module-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="26" height="30" rx="3" fill="#eef2ff" stroke="#4338CA" stroke-width="1.5"/><path d="M21 1v9h9" stroke="#4338CA" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="7" y1="14" x2="19" y2="14" stroke="#4338CA" stroke-width="1.5" opacity="0.5"/><line x1="7" y1="18" x2="16" y2="18" stroke="#4338CA" stroke-width="1.5" opacity="0.35"/><rect x="3" y="21" width="26" height="10" rx="0" fill="#4338CA"/><path d="M3 28h26v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-4z" fill="#4338CA"/><text x="16" y="29" font-size="6.5" font-family="monospace" font-weight="800" fill="white" text-anchor="middle">.EXE?</text></svg></div>
+          <div style="flex:1">
+            <div class="card-title">File Signature Analysis</div>
+            <div class="card-subtitle">Detect file type masquerading via magic byte analysis</div>
+          </div>
+          <div class="card-header-meta">
+            <!-- <span class="header-badge">30+ Sigs</span> -->
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="upload-zone" id="sig-zone">
+            <input type="file" id="sig-file" accept="*/*" onchange="onFileSelect(this,'sig')">
+            <span class="upload-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="26" height="30" rx="3" fill="#eef2ff" stroke="#4338CA" stroke-width="1.5"/><path d="M21 1v9h9" stroke="#4338CA" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="7" y1="13" x2="19" y2="13" stroke="#4338CA" stroke-width="1.5" opacity="0.5"/><line x1="7" y1="17" x2="16" y2="17" stroke="#4338CA" stroke-width="1.5" opacity="0.35"/><rect x="3" y="21" width="26" height="11" rx="0" fill="#4338CA"/><path d="M3 29h26v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-3z" fill="#4338CA"/><text x="16" y="30" font-size="6.5" font-family="monospace" font-weight="800" fill="white" text-anchor="middle">.EXE?</text></svg></span>
+            <div class="upload-title">Drop any file here</div>
+            <div class="upload-hint">Magic bytes checked against known signatures</div>
+            <div class="upload-formats">
+              <span class="fmt-tag">.exe→.jpg?</span>
+              <span class="fmt-tag">.pdf→.txt?</span>
+              <span class="fmt-tag">any</span>
+            </div>
+          </div>
+          <div class="selected-file" id="sig-selected">
+            <div class="file-icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="26" height="30" rx="3" fill="#eef2ff" stroke="#4338CA" stroke-width="1.8"/><path d="M21 1v9h9" stroke="#4338CA" stroke-width="1.8" fill="none" stroke-linejoin="round"/><rect x="3" y="21" width="26" height="10" fill="#4338CA"/><text x="16" y="29" font-size="6" font-family="monospace" font-weight="800" fill="white" text-anchor="middle">.EXE?</text></svg></div>
+            <span class="file-name" id="sig-fname"></span>
+            <span class="file-size" id="sig-fsize"></span>
+          </div>
+          <div class="loader" id="sig-loader"><div class="spinner"></div>Scanning magic bytes and computing entropy&hellip;</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runModule('signature')" id="sig-run" disabled>&#9654; Detect Signature</button>
+          </div>
+        </div>
+      </div>
+      <div class="card results-card" id="sig-results"></div>
+    </div>
+
+    <!-- DEEPFAKE -->
+    <div id="panel-deepfake" class="module-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#fef2f2" stroke="#DC2626" stroke-width="1.5"/><circle cx="16" cy="13" r="5.5" stroke="#DC2626" stroke-width="2" fill="none"/><path d="M7 27c0-4.9 4-9 9-9s9 4.1 9 9" stroke="#DC2626" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="9" y1="10" x2="23" y2="10" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="8" y1="13" x2="10.5" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="21.5" y1="13" x2="24" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="9" y1="16" x2="23" y2="16" stroke="#DC2626" stroke-width="1" opacity="0.4"/></svg></div>
+          <div style="flex:1">
+            <div class="card-title">Deepfake Detection</div>
+            <div class="card-subtitle">6-layer forensic pipeline &middot; JPEG artifacts &middot; FFT frequency &middot; noise analysis &middot; ELA &middot; temporal coherence</div>
+          </div>
+          <div class="card-header-meta">
+            <span class="header-badge">6-Layer AI</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="options-row">
+            <div class="option-group">
+              <div class="option-label">Media Type</div>
+              <div class="radio-group">
+                <div class="radio-chip"><input type="radio" name="df-type" id="df-img" value="image" checked><label for="df-img">🖼 Image</label></div>
+                <div class="radio-chip"><input type="radio" name="df-type" id="df-vid" value="video"><label for="df-vid">🎬 Video</label></div>
+              </div>
+            </div>
+          </div>
+          <div class="upload-zone" id="df-zone">
+            <input type="file" id="df-file" accept="image/*,video/*,audio/*" onchange="onFileSelect(this,'df')">
+            <span class="upload-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="7" fill="#fef2f2" stroke="#DC2626" stroke-width="1.5"/><circle cx="16" cy="13" r="6" stroke="#DC2626" stroke-width="1.8" fill="none"/><path d="M6 28c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="#DC2626" stroke-width="1.8" fill="none" stroke-linecap="round"/><line x1="9" y1="10" x2="23" y2="10" stroke="#DC2626" stroke-width="1" opacity="0.35"/><line x1="8" y1="13" x2="10" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.35"/><line x1="22" y1="13" x2="24" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.35"/><line x1="9" y1="16" x2="23" y2="16" stroke="#DC2626" stroke-width="1" opacity="0.35"/></svg></span>
+            <div class="upload-title">Drop media file here</div>
+            <div class="upload-hint">AI-generated content detection via multi-layer forensic analysis</div>
+            <div class="upload-formats" id="df-upload-formats">
+              <span class="fmt-tag">.jpg</span><span class="fmt-tag">.png</span>
+            </div>
+            <script>
+              // Switch format tags based on selected media type
+              document.addEventListener('DOMContentLoaded', function() {
+                const imgRadio = document.getElementById('df-img');
+                const vidRadio = document.getElementById('df-vid');
+                const formats = document.getElementById('df-upload-formats');
+                function updateFormats() {
+                  if (imgRadio.checked) {
+                    formats.innerHTML = '<span class="fmt-tag">.jpg</span><span class="fmt-tag">.png</span>';
+                  } else if (vidRadio.checked) {
+                    formats.innerHTML = '<span class="fmt-tag">.mp4</span>';
+                  }
+                }
+                imgRadio.addEventListener('change', updateFormats);
+                vidRadio.addEventListener('change', updateFormats);
+                updateFormats();
+              });
+            </script>
+          </div>
+          <div class="selected-file" id="df-selected">
+            <div class="file-icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#fef2f2" stroke="#DC2626" stroke-width="1.8"/><circle cx="16" cy="13" r="5" stroke="#DC2626" stroke-width="1.6" fill="none"/><path d="M8 27c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="#DC2626" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></div>
+            <span class="file-name" id="df-fname"></span>
+            <span class="file-size" id="df-fsize"></span>
+          </div>
+          <div class="loader" id="df-loader"><div class="spinner"></div>Running deepfake detection pipeline&hellip;</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runModule('deepfake')" id="df-run" disabled>&#9654; Analyze for Deepfake</button>
+          </div>
+        </div>
+      </div>
+      <div class="card results-card" id="df-results"></div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="panel-report" class="module-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="3" y="3" width="26" height="26" rx="5" fill="#fff7ed" stroke="#EA580C" stroke-width="1.5"/><rect x="8" y="7" width="16" height="3" rx="1.5" fill="#EA580C" opacity="0.45"/><rect x="8" y="12" width="11" height="2" rx="1" fill="#EA580C" opacity="0.3"/><rect x="8" y="20" width="3.5" height="7" rx="1" fill="#EA580C"/><rect x="14" y="17" width="3.5" height="10" rx="1" fill="#F97316"/><rect x="20" y="14" width="3.5" height="13" rx="1" fill="#FB923C"/><polyline points="9.5,20 15.5,17 21.5,14 25,11" stroke="#EA580C" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div style="flex:1">
+            <div class="card-title">Report Generator</div>
+            <div class="card-subtitle">Compile results from multiple modules into a single downloadable forensic report</div>
+          </div>
+          <div class="card-header-meta">
+            <span class="header-badge">HTML · PDF</span>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- Report Title -->
+          <div class="option-group" style="margin-bottom:22px">
+            <div class="option-label">Report Title</div>
+            <input type="text" id="report-title" class="report-title-input"
+              placeholder="e.g. Investigation Case #2024-001"
+              value="ADFAF Forensic Investigation Report">
+          </div>
+
+          <!-- Module selection -->
+          <div class="option-label" style="margin-bottom:14px">Select Modules to Include</div>
+          <div class="report-module-grid" id="report-module-grid">
+            <label class="report-mod-card" id="rmod-metadata">
+              <input type="checkbox" value="metadata" checked>
+              <div class="rmod-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="19" height="26" rx="2" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.5"/><path d="M17 1v7h7" stroke="#7C3AED" stroke-width="1.5" fill="none" stroke-linejoin="round"/><text x="6" y="18" font-size="8" font-family="monospace" font-weight="700" fill="#4F6EF7">&lt;/&gt;</text><circle cx="23" cy="25" r="6" fill="#7C3AED" opacity="0.12" stroke="#7C3AED" stroke-width="1.5"/><path d="M23 22v1.2m0 3.6V28m-3.1-4.9.85.85m4.5 4.5.85.85M20 25h1.2m3.6 0H26m-5.1 1.65.85-.85m4.5-4.5.85-.85" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/><circle cx="23" cy="25" r="1.8" fill="#7C3AED"/></svg></div>
+              <div class="rmod-name">Metadata Analysis</div>
+              <div class="rmod-status" id="rmod-status-metadata">No results yet</div>
+            </label>
+            <label class="report-mod-card" id="rmod-stego">
+              <input type="checkbox" value="stego" checked>
+              <div class="rmod-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfeff" stroke="#0891B2" stroke-width="1.5"/><ellipse cx="16" cy="16" rx="10" ry="6" stroke="#0891B2" stroke-width="1.8" fill="none"/><circle cx="16" cy="16" r="3.5" fill="#0891B2"/><circle cx="16" cy="16" r="1.5" fill="#ecfeff"/><line x1="6" y1="14" x2="26" y2="14" stroke="#0891B2" stroke-width="1" opacity="0.35"/><line x1="6" y1="18" x2="26" y2="18" stroke="#0891B2" stroke-width="1" opacity="0.35"/></svg></div>
+              <div class="rmod-name">Steganography</div>
+              <div class="rmod-status" id="rmod-status-stego">No results yet</div>
+            </label>
+            <label class="report-mod-card" id="rmod-encoding">
+              <input type="checkbox" value="encoding" checked>
+              <div class="rmod-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/><text x="4" y="20" font-size="11" font-family="monospace" font-weight="800" fill="#059669">&lt;/&gt;</text><polyline points="22,9 27,16 22,23" stroke="#059669" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="rmod-name">Encoding / Decoding</div>
+              <div class="rmod-status" id="rmod-status-encoding">No results yet</div>
+            </label>
+            <label class="report-mod-card" id="rmod-signature">
+              <input type="checkbox" value="signature" checked>
+              <div class="rmod-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="26" height="30" rx="3" fill="#eef2ff" stroke="#4338CA" stroke-width="1.5"/><path d="M21 1v9h9" stroke="#4338CA" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="7" y1="14" x2="19" y2="14" stroke="#4338CA" stroke-width="1.5" opacity="0.5"/><line x1="7" y1="18" x2="16" y2="18" stroke="#4338CA" stroke-width="1.5" opacity="0.35"/><rect x="3" y="21" width="26" height="10" rx="0" fill="#4338CA"/><path d="M3 28h26v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-4z" fill="#4338CA"/><text x="16" y="29" font-size="6.5" font-family="monospace" font-weight="800" fill="white" text-anchor="middle">.EXE?</text></svg></div>
+              <div class="rmod-name">File Signature</div>
+              <div class="rmod-status" id="rmod-status-signature">No results yet</div>
+            </label>
+            <label class="report-mod-card" id="rmod-deepfake">
+              <input type="checkbox" value="deepfake" checked>
+              <div class="rmod-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#fef2f2" stroke="#DC2626" stroke-width="1.5"/><circle cx="16" cy="13" r="5.5" stroke="#DC2626" stroke-width="2" fill="none"/><path d="M7 27c0-4.9 4-9 9-9s9 4.1 9 9" stroke="#DC2626" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="9" y1="10" x2="23" y2="10" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="8" y1="13" x2="10.5" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="21.5" y1="13" x2="24" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="9" y1="16" x2="23" y2="16" stroke="#DC2626" stroke-width="1" opacity="0.4"/></svg></div>
+              <div class="rmod-name">Deepfake Detection</div>
+              <div class="rmod-status" id="rmod-status-deepfake">No results yet</div>
+            </label>
+          </div>
+
+          <!-- Info banner -->
+          <div class="report-info-banner">
+            <span>ℹ️</span>
+            <span>Run analyses in each module first — results are automatically captured here. Only modules with results will have data in the report.</span>
+          </div>
+
+          <div class="btn-row" style="gap:12px;flex-wrap:wrap">
+            <button class="btn btn-primary" id="report-html-btn" onclick="generateReport('html')">
+              ⬇ Download HTML Report
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview summary card -->
+      <div class="card" id="report-summary-card" style="display:none">
+        <div class="card-header">
+          <div class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect x="3" y="3" width="26" height="26" rx="5" fill="#fff7ed" stroke="#EA580C" stroke-width="1.5"/><rect x="8" y="7" width="16" height="3" rx="1.5" fill="#EA580C" opacity="0.45"/><rect x="8" y="12" width="11" height="2" rx="1" fill="#EA580C" opacity="0.3"/><rect x="8" y="20" width="3.5" height="7" rx="1" fill="#EA580C"/><rect x="14" y="17" width="3.5" height="10" rx="1" fill="#F97316"/><rect x="20" y="14" width="3.5" height="13" rx="1" fill="#FB923C"/><polyline points="9.5,20 15.5,17 21.5,14 25,11" stroke="#EA580C" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div style="flex:1">
+            <div class="card-title">Captured Results Summary</div>
+            <div class="card-subtitle">Modules with data ready for the report</div>
+          </div>
+        </div>
+        <div class="card-body" id="report-summary-body"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const files = {};
+let activeModule = null;
+
+function showModule(name) {
+  document.querySelectorAll('.module-panel').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('.mod-nav-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('visible');
+  const navBtn = document.getElementById('nav-' + name);
+  if (navBtn) navBtn.classList.add('active');
+  activeModule = name;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function validateMFTFile(input) {
+
+  const file = input.files[0];
+  if (!file) return;
+
+  const name = file.name.toLowerCase();
+
+  if (!name.endsWith('.copy0')) {
+    showToast('❌ Only .copy0 ($MFT) files allowed');
+    input.value = ''; // clear file
+    return;
+  }
+
+  // if valid → continue normal flow
+  onFileSelect(input, 'meta-mft');
+}
+
+
+// EXISTING FUNCTION (DO NOT MOVE)
+
+function onFileSelect(input, prefix) {
+  const file = input.files[0];
+  if (!file) return;
+  files[prefix] = file;
+  const sel   = document.getElementById(prefix + '-selected');
+  const fname = document.getElementById(prefix + '-fname');
+  const fsize = document.getElementById(prefix + '-fsize');
+  if (sel) { sel.classList.add('visible'); fname.textContent = file.name; fsize.textContent = formatSize(file.size); }
+  if (prefix === 'meta' || prefix === 'meta-mft') {
+
+    const mftSelected  = document.getElementById('meta-mft-file').files.length > 0;
+    const fileSelected = document.getElementById('meta-file').files.length > 0;
+
+    const runBtn = document.getElementById('meta-run');
+
+    if (runBtn) {
+        runBtn.disabled = !(mftSelected && fileSelected);
+    }
+  } else {
+    // For all other modules (stego, enc, sig, df) — enable run button when file is selected
+    const runBtn = document.getElementById(prefix + '-run');
+    if (runBtn) runBtn.disabled = false;
+  }
+}
+
+function formatSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+document.querySelectorAll('.upload-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+      const input = zone.querySelector('input[type=file]');
+      let prefix = zone.id.replace('-zone','');
+      if (zone.id === 'meta-mft-zone') prefix = 'meta-mft';
+      if (zone.id === 'meta-zone') prefix = 'meta';
+      const dt2 = new DataTransfer(); dt2.items.add(e.dataTransfer.files[0]);
+      input.files = dt2.files; onFileSelect(input, prefix);
+    }
+  });
+});
+
+async function runModule(module) {
+  const prefixMap = {metadata:'meta',stego:'stego',encoding:'enc',signature:'sig',deepfake:'df'};
+  const prefix = prefixMap[module];
+  if (module === 'metadata' && !files['meta-mft']) { showToast('Please select $MFT first'); return; }
+  if (module === 'metadata' && !files['meta'])     { showToast('Please select the suspicious file'); return; }
+  if (!files[prefix]) { showToast('Please select a file first'); return; }
+  const loader      = document.getElementById(prefix + '-loader');
+  const resultsCard = document.getElementById(prefix + '-results');
+  const runBtn      = document.getElementById(prefix + '-run');
+  loader.classList.add('visible'); resultsCard.classList.remove('visible'); runBtn.disabled = true;
+  try {
+    const fd = new FormData(); fd.append('file', files[prefix]);
+    let url;
+    if (module === 'metadata') {
+    const mftFile = document.getElementById('meta-mft-file').files[0];
+    const mainFile = document.getElementById('meta-file').files[0];
+
+    if (!mftFile) {
+        showToast('Please select $MFT file');
+        return;
+    }
+
+    if (!mainFile) {
+        showToast('Please select suspicious file');
+        return;
+    }
+
+    fd.append('mft_file', mftFile);
+    fd.append('file', mainFile);
+    fd.append('client_last_modified_ms', mainFile.lastModified || '');
+
+    url = '/api/metadata';
+}
+    else if (module === 'stego')    url = '/api/steganography/' + document.querySelector('input[name="stego-type"]:checked').value;
+    else if (module === 'encoding') { fd.append('encoding', document.querySelector('input[name="enc-std"]:checked').value); fd.append('mode', document.querySelector('input[name="enc-mode"]:checked').value); url = '/api/encoding'; }
+    else if (module === 'signature') url = '/api/signature';
+    else if (module === 'deepfake')  { fd.append('type', document.querySelector('input[name="df-type"]:checked').value); url = '/api/deepfake'; }
+    const resp = await fetch(url, {method:'POST',body:fd});
+    const raw  = await resp.text();
+    let data;
+    try { data = JSON.parse(raw); } catch { throw new Error(raw.trim().startsWith('<') ? 'Server HTTP ' + resp.status : raw.slice(0,240)); }
+    if (!resp.ok || data.status === 'error') throw new Error(data.message || data.error || 'HTTP ' + resp.status);
+    renderResults(module, data, prefix, resultsCard);
+    resultsCard.classList.add('visible');
+    resultsCard.scrollIntoView({behavior:'smooth',block:'nearest'});
+    showToast('Analysis complete ✓');
+  } catch(err) { showToast('Error: ' + err.message); console.error(err); }
+  finally { loader.classList.remove('visible'); runBtn.disabled = false; }
+}
+
+function renderResults(module, data, prefix, card) {
+  if (data.status === 'error') { card.innerHTML = '<div class="card-body" style="color:var(--red)">Error: ' + (data.message||'Unknown') + '</div>'; return; }
+  if (module === 'encoding') renderEncoding(data, card);
+  else if (module === 'metadata') renderTable(data, card);
+  else if (module === 'stego' || module === 'signature') renderTableWithVerdict(data, card);
+  else if (module === 'deepfake') renderDeepfake(data, card);
+}
+
+function renderEncoding(data, card) {
+  const isEncode = data.mode === 'encode';
+  const cc = isEncode ? 'var(--amber)' : 'var(--green)';
+  let html = '<div class="verdict-banner success"><div class="verdict-icon-wrap">' + (isEncode ? '⬆️' : '⬇️') + '</div><div><div class="verdict-title">' + data.encoding + ' ' + (isEncode ? 'Encoding' : 'Decoding') + ' &mdash; Complete</div><div class="verdict-sub">' + esc(data.filename) + '</div></div></div>';
+  html += '<div class="results-table">';
+  html += row('Standard', data.encoding, 'info') + row('Operation', isEncode ? 'Encode (Binary → Text)' : 'Decode (Text → Binary)', 'info') + row('Input Size', data.input_size, 'info') + row('Output Size', data.output_size, 'info');
+  html += '<div class="result-row"><div class="result-key">Size Change</div><div class="result-val" style="color:' + cc + ';font-weight:600">' + esc(data.size_change) + '</div></div>';
+  if (data.charset) html += row('Character Set', data.charset, 'mono');
+  if (data.detected_type) html += row('Detected Type', data.detected_type, 'info');
+  html += '</div>';
+  if (data.preview) {
+    html += '<div style="padding:0 30px 24px"><div class="section-label">Output Preview</div><div class="encoded-output" id="enc-output-text">' + esc(data.preview) + '</div><div style="display:flex;gap:8px;margin-top:12px">';
+    html += '<button class="btn btn-ghost copy-btn" onclick="copyOutput()">📋 Copy</button>';
+    if (data.download_b64) html += '<button class="btn btn-ghost copy-btn" onclick="downloadDecoded(\'' + esc(data.filename) + '\',\'' + data.download_b64 + '\')">⬇ Download Decoded</button>';
+    if (data.full_output)  html += '<button class="btn btn-ghost copy-btn" onclick="downloadEncoded(\'' + esc(data.filename) + '\',\'' + encodeURIComponent(data.full_output) + '\')">⬇ Download Encoded</button>';
+    html += '</div></div>';
+  }
+  card.innerHTML = html;
+}
+
+function renderTableWithVerdict(data, card) {
+  const icons = {success:'✅',warning:'⚠️',danger:'🚨',info:'ℹ️'};
+  let html = '<div class="verdict-banner ' + data.verdict_type + '"><div class="verdict-icon-wrap">' + (icons[data.verdict_type]||'🔍') + '</div><div><div class="verdict-title">' + esc(data.verdict) + '</div><div class="verdict-sub">' + esc(data.filename) + '</div></div></div>';
+  if (data.findings && data.findings.length) {
+    html += '<div class="findings-section" style="padding-top:20px"><div class="findings-title">Forensic Findings (' + data.findings.length + ')</div>';
+    data.findings.forEach(f => html += '<div class="finding-chip"><span class="finding-chip-icon">⚠</span>' + esc(f) + '</div>');
+    html += '</div>';
+  }
+  html += '<div class="results-table">';
+  (data.results||[]).forEach(r => html += row(r.label, r.value, r.type));
+  html += '</div>';
+  card.innerHTML = html;
+}
+
+function renderTable(data, card) {
+  let html = '<div class="results-table">';
+  (data.results||[]).forEach(r => html += row(r.label, r.value, r.type||'info'));
+  html += '</div>';
+  card.innerHTML = html;
+}
+
+function renderDeepfake(data, card) {
+  const score  = data.score || 0;
+  const icons  = {success:'✅',warning:'⚠️',danger:'🚨',info:'ℹ️'};
+  const vClass = data.verdict_type === 'danger' ? 'danger' : (data.verdict_type||'info');
+  const sc     = score >= 65 ? 'high' : score >= 40 ? 'medium' : 'low';
+  let html = '<div class="verdict-banner ' + vClass + '"><div class="verdict-icon-wrap">' + (icons[data.verdict_type]||'🔍') + '</div><div><div class="verdict-title">' + esc(data.verdict) + '</div><div class="verdict-sub">' + esc(data.confidence||'') + '</div></div></div>';
+  if (data.score !== undefined) {
+    html += '<div class="score-section"><div class="score-label">Deepfake Suspicion Score</div><div class="score-display"><div class="score-number">' + score + '</div><div style="flex:1"><div class="score-track"><div class="score-fill ' + sc + '" style="width:0%" id="df-score-bar"></div></div><div class="score-scale"><span>Authentic</span><span>Inconclusive</span><span>Deepfake</span></div></div><div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-4)">/100</div></div></div>';
+  }
+  if (data.details) {
+    html += '<div class="breakdown-grid">';
+    Object.entries(data.details).forEach(([k,v]) => {
+      const s = v.score, sc2 = s>=65?'high':s>=40?'medium':'low', bc = s>=65?'var(--red)':s>=40?'var(--amber)':'var(--green)';
+      html += '<div class="breakdown-item"><div class="breakdown-name">'+esc(k)+'</div><div class="breakdown-score '+sc2+'">'+s+'</div><div class="breakdown-bar"><div class="breakdown-bar-fill" style="width:'+s+'%;background:'+bc+'"></div></div><div class="breakdown-detail">'+esc(v.detail||'')+'</div></div>';
+    });
+    html += '</div>';
+  }
+  html += '<div class="results-table">';
+  (data.results||[]).forEach(r => html += row(r.label, r.value, r.type));
+  html += '</div>';
+  if (data.methodology) html += '<div class="method-note">🔬 ' + esc(data.methodology) + '</div>';
+  card.innerHTML = html;
+  setTimeout(() => { const b = document.getElementById('df-score-bar'); if(b) b.style.width = score+'%'; }, 100);
+}
+
+function row(label, value, type) {
+  if (type === 'section') {
+    const title = value || label;
+    return '<div class="result-section-row"><div class="result-section-title">'+esc(title)+'</div></div>';
+  }
+  const cls = {warning:'warning',success:'success',mono:'mono',exif:'exif',danger:'danger'}[type]||'info';
+  return '<div class="result-row"><div class="result-key">'+esc(label)+'</div><div class="result-val '+cls+'">'+esc(value)+'</div></div>';
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function copyOutput() {
+  const el = document.getElementById('enc-output-text');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => showToast('Copied ✓'));
+}
+
+function downloadDecoded(f, b64) {
+  const bin = atob(b64), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([arr]));
+  a.download = f + '_decoded';
+  a.click();
+}
+
+function downloadEncoded(f, enc) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([decodeURIComponent(enc)], {type:'text/plain'}));
+  a.download = f + '_encoded.txt';
+  a.click();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ── REPORT MODULE ── */
+const reportStore = {};
+
+const MOD_META = {
+  metadata:  { name:'Metadata Analysis',    icon:'🦅', prefix:'meta' },
+  stego:     { name:'Steganography',         icon:'🔍', prefix:'stego' },
+  encoding:  { name:'Encoding / Decoding',   icon:'🔠', prefix:'enc' },
+  signature: { name:'File Signature Analysis',        icon:'�', prefix:'sig' },
+  deepfake:  { name:'Deepfake Detection',    icon:'�', prefix:'df' }
+};
+
+const REPORT_ICONS = {
+  metadata: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="19" height="26" rx="2" fill="#ede9fe" stroke="#7C3AED" stroke-width="1.5"/><path d="M17 1v7h7" stroke="#7C3AED" stroke-width="1.5" fill="none" stroke-linejoin="round"/><text x="6" y="18" font-size="8" font-family="monospace" font-weight="700" fill="#4F6EF7">&lt;/&gt;</text><circle cx="23" cy="25" r="6" fill="#7C3AED" opacity="0.12" stroke="#7C3AED" stroke-width="1.5"/><path d="M23 22v1.2m0 3.6V28m-3.1-4.9.85.85m4.5 4.5.85.85M20 25h1.2m3.6 0H26m-5.1 1.65.85-.85m4.5-4.5.85-.85" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/><circle cx="23" cy="25" r="1.8" fill="#7C3AED"/></svg>',
+  stego: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfeff" stroke="#0891B2" stroke-width="1.5"/><ellipse cx="16" cy="16" rx="10" ry="6" stroke="#0891B2" stroke-width="1.8" fill="none"/><circle cx="16" cy="16" r="3.5" fill="#0891B2"/><circle cx="16" cy="16" r="1.5" fill="#ecfeff"/><line x1="6" y1="14" x2="26" y2="14" stroke="#0891B2" stroke-width="1" opacity="0.35"/><line x1="6" y1="18" x2="26" y2="18" stroke="#0891B2" stroke-width="1" opacity="0.35"/></svg>',
+  encoding: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/><text x="4" y="20" font-size="11" font-family="monospace" font-weight="800" fill="#059669">&lt;/&gt;</text><polyline points="22,9 27,16 22,23" stroke="#059669" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  signature: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect x="3" y="1" width="26" height="30" rx="3" fill="#eef2ff" stroke="#4338CA" stroke-width="1.5"/><path d="M21 1v9h9" stroke="#4338CA" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="7" y1="14" x2="19" y2="14" stroke="#4338CA" stroke-width="1.5" opacity="0.5"/><line x1="7" y1="18" x2="16" y2="18" stroke="#4338CA" stroke-width="1.5" opacity="0.35"/><rect x="3" y="21" width="26" height="10" rx="0" fill="#4338CA"/><path d="M3 28h26v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-4z" fill="#4338CA"/><text x="16" y="29" font-size="6.5" font-family="monospace" font-weight="800" fill="white" text-anchor="middle">.EXE?</text></svg>',
+  deepfake: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="6" fill="#fef2f2" stroke="#DC2626" stroke-width="1.5"/><circle cx="16" cy="13" r="5.5" stroke="#DC2626" stroke-width="2" fill="none"/><path d="M7 27c0-4.9 4-9 9-9s9 4.1 9 9" stroke="#DC2626" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="9" y1="10" x2="23" y2="10" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="8" y1="13" x2="10.5" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="21.5" y1="13" x2="24" y2="13" stroke="#DC2626" stroke-width="1" opacity="0.4"/><line x1="9" y1="16" x2="23" y2="16" stroke="#DC2626" stroke-width="1" opacity="0.4"/></svg>'
+};
+
+Object.assign(MOD_META, {
+  metadata:  { name:'Metadata Analysis', icon: REPORT_ICONS.metadata, prefix:'meta' },
+  stego:     { name:'Steganography', icon: REPORT_ICONS.stego, prefix:'stego' },
+  encoding:  { name:'Encoding / Decoding', icon: REPORT_ICONS.encoding, prefix:'enc' },
+  signature: { name:'File Signature Analysis', icon: REPORT_ICONS.signature, prefix:'sig' },
+  deepfake:  { name:'Deepfake Detection', icon: REPORT_ICONS.deepfake, prefix:'df' }
+});
+
+// Patch runModule to capture results automatically
+const _origRunModule = runModule;
+window.runModule = async function(module) {
+  await _origRunModule(module);
+  if (MOD_META[module]) {
+    const prefix  = MOD_META[module].prefix;
+    const card    = document.getElementById(prefix + '-results');
+    if (card && card.classList.contains('visible')) {
+      // serialise the current result data from the DOM for the report
+      // We store the raw data object that renderResults received
+      if (window._lastResultData && window._lastResultData.module === module) {
+        reportStore[module] = window._lastResultData.data;
+        updateReportStatus(module);
+        updateReportSummary();
+      }
+    }
+  }
+};
+
+// Intercept renderResults to save raw data
+const _origRenderResults = renderResults;
+window.renderResults = function(module, data, prefix, card) {
+  window._lastResultData = { module, data };
+  _origRenderResults(module, data, prefix, card);
+  // Capture immediately
+  if (MOD_META[module]) {
+    reportStore[module] = data;
+    updateReportStatus(module);
+    updateReportSummary();
+  }
+};
+
+function updateReportStatus(module) {
+  const el = document.getElementById('rmod-status-' + module);
+  if (!el) return;
+  const data = reportStore[module];
+  if (data) {
+    const count = (data.results || []).length;
+    el.textContent = count + ' result' + (count !== 1 ? 's' : '') + ' captured';
+    el.classList.add('has-data');
+  } else {
+    el.textContent = 'No results yet';
+    el.classList.remove('has-data');
+  }
+}
+
+function updateReportSummary() {
+  const summaryCard = document.getElementById('report-summary-card');
+  const summaryBody = document.getElementById('report-summary-body');
+  if (!summaryCard || !summaryBody) return;
+  const entries = Object.entries(reportStore).filter(([,d]) => d);
+  if (!entries.length) { summaryCard.style.display = 'none'; return; }
+  summaryCard.style.display = '';
+  summaryBody.innerHTML = entries.map(([mod, data]) => {
+    const m = MOD_META[mod] || {};
+    if (!m.icon) m.icon = REPORT_ICONS.metadata;
+    const count = (data.results || []).length;
+    return `<div class="report-summary-row">
+      <span><span class="report-summary-icon">${m.icon||'🔬'}</span><strong>${m.name||mod}</strong></span>
+      <span class="report-summary-count">${count} rows</span>
+    </div>`;
+  }).join('');
+}
+
+async function generateReport(format) {
+  const checkedBoxes = document.querySelectorAll('#report-module-grid input[type=checkbox]:checked');
+  const selected     = Array.from(checkedBoxes).map(cb => cb.value);
+  if (!selected.length) { showToast('Select at least one module'); return; }
+
+  const title = document.getElementById('report-title').value.trim() || 'ADFAF Forensic Report';
+
+  const modules = selected.map(mod => {
+    const data = reportStore[mod] || {};
+    const meta = MOD_META[mod] || {};
+    if (!meta.icon) meta.icon = REPORT_ICONS.metadata;
+    return {
+      name:        meta.name || mod,
+      key:         mod,
+      icon:        meta.icon || '🔬',
+      results:     data.results || [],
+      verdict:     data.verdict || '',
+      verdict_type:data.verdict_type || 'info',
+      score:       data.score !== undefined ? data.score : null
+    };
+  });
+
+  try {
+    const resp = await fetch('/api/report/html', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, modules })
+    });
+    if (!resp.ok) {
+    const errText = await resp.text();
+    throw new Error("Server Error: " + errText);
+}
+
+    const html = await resp.text();
+
+    // sanity check (VERY IMPORTANT)
+    if (html.includes("Not Found") || html.includes("<title>404")) {
+        throw new Error("Invalid report generated (404 page received)");
+    }
+
+    if (format === 'html') {
+      const blob = new Blob([html], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ADFA_Report_' + new Date().toISOString().slice(0,10) + '.html';
+      a.click();
+      showToast('HTML report downloaded ✓');
+    } else {
+      const pdfResp = await fetch('/api/report/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modules, title })
+      });
+      if (!pdfResp.ok) {
+        const errText = await pdfResp.text();
+        throw new Error('PDF Server Error: ' + errText);
+      }
+      const blob = await pdfResp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ADFA_Report_' + new Date().toISOString().slice(0,10) + '.pdf';
+      a.click();
+      showToast('PDF report downloaded ✓');
+    }
+  } catch(err) {
+    showToast('Report error: ' + err.message);
+  }
+}
+
+</script>
+</body>
+</html>
