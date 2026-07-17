@@ -1,0 +1,1 @@
+This folder is used to store uploaded files and generated reports at runtime.
